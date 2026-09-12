@@ -1,12 +1,10 @@
 import MeetingCard from '@/components/MeetingCard';
-import type { SacramentMeeting } from '@/lib/types';
+import { getMeetings } from '@/lib/meetings-db';
 import Link from 'next/link';
 
-export default async function MeetingsPage() {
-  // Fetching absolute URL to fulfill API route requirement
-  const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/api/meetings`, { cache: 'no-store' });
-  const meetings: SacramentMeeting[] = await res.json();
+export default function MeetingsPage() {
+  // Call the mock database directly instead of using fetch()
+  const meetings = getMeetings();
 
   return (
     <div>

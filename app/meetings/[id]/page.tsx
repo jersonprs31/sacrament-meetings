@@ -4,13 +4,16 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 
-export default async function MeetingDetailPage({ params }: { params: { id: string } }) {
-  // Dynamically get the exact host URL (localhost or Vercel)
-  const headersList = headers();
+export const dynamic = 'force-dynamic';
+
+export default async function MeetingDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  // Await params and headers in Next.js 16!
+  const { id } = await params;
+  const headersList = await headers();
   const host = headersList.get('host');
   const protocol = host?.includes('localhost') ? 'http' : 'https';
   
-  const res = await fetch(`${protocol}://${host}/api/meetings/${params.id}`, { cache: 'no-store' });
+  const res = await fetch(`${protocol}://${host}/api/meetings/${id}`, { cache: 'no-store' });
   
   if (!res.ok) {
     notFound();

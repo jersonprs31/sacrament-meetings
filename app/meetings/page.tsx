@@ -3,9 +3,11 @@ import type { SacramentMeeting } from '@/lib/types';
 import Link from 'next/link';
 import { headers } from 'next/headers';
 
+export const dynamic = 'force-dynamic';
+
 export default async function MeetingsPage() {
-  // Dynamically get the exact host URL (localhost or Vercel)
-  const headersList = headers();
+  // Await the headers in Next.js 16!
+  const headersList = await headers();
   const host = headersList.get('host');
   const protocol = host?.includes('localhost') ? 'http' : 'https';
   

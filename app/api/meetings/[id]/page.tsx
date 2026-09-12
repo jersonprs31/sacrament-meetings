@@ -2,10 +2,15 @@ import MeetingDetail from '@/components/MeetingDetail';
 import type { SacramentMeeting } from '@/lib/types';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
 
 export default async function MeetingDetailPage({ params }: { params: { id: string } }) {
-  const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/api/meetings/${params.id}`, { cache: 'no-store' });
+  // Dynamically get the exact host URL (localhost or Vercel)
+  const headersList = headers();
+  const host = headersList.get('host');
+  const protocol = host?.includes('localhost') ? 'http' : 'https';
+  
+  const res = await fetch(`${protocol}://${host}/api/meetings/${params.id}`, { cache: 'no-store' });
   
   if (!res.ok) {
     notFound();

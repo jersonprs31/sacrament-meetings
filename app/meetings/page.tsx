@@ -1,11 +1,15 @@
 import MeetingCard from '@/components/MeetingCard';
 import type { SacramentMeeting } from '@/lib/types';
 import Link from 'next/link';
+import { headers } from 'next/headers';
 
 export default async function MeetingsPage() {
-  // Fetching absolute URL to fulfill API route requirement
-  const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/api/meetings`, { cache: 'no-store' });
+  // Dynamically get the exact host URL (localhost or Vercel)
+  const headersList = headers();
+  const host = headersList.get('host');
+  const protocol = host?.includes('localhost') ? 'http' : 'https';
+  
+  const res = await fetch(`${protocol}://${host}/api/meetings`, { cache: 'no-store' });
   const meetings: SacramentMeeting[] = await res.json();
 
   return (

@@ -1,18 +1,10 @@
 import MeetingCard from '@/components/MeetingCard';
-import type { SacramentMeeting } from '@/lib/types';
+import { getMeetings } from '@/lib/meetings-db';
 import Link from 'next/link';
-import { headers } from 'next/headers';
 
-export const dynamic = 'force-dynamic';
-
-export default async function MeetingsPage() {
-  // Await the headers in Next.js 16!
-  const headersList = await headers();
-  const host = headersList.get('host');
-  const protocol = host?.includes('localhost') ? 'http' : 'https';
-  
-  const res = await fetch(`${protocol}://${host}/api/meetings`, { cache: 'no-store' });
-  const meetings: SacramentMeeting[] = await res.json();
+export default function MeetingsPage() {
+  // Call the mock database directly instead of using fetch()
+  const meetings = getMeetings();
 
   return (
     <div>

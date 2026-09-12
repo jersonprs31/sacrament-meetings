@@ -1,25 +1,18 @@
 import MeetingDetail from '@/components/MeetingDetail';
-import type { SacramentMeeting } from '@/lib/types';
+import { getMeetingById } from '@/lib/meetings-db';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { headers } from 'next/headers';
-
-export const dynamic = 'force-dynamic';
 
 export default async function MeetingDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  // Await params and headers in Next.js 16!
+  // Await params for Next.js 16 compatibility
   const { id } = await params;
-  const headersList = await headers();
-  const host = headersList.get('host');
-  const protocol = host?.includes('localhost') ? 'http' : 'https';
   
-  const res = await fetch(`${protocol}://${host}/api/meetings/${id}`, { cache: 'no-store' });
+  // Call the mock database directly instead of using fetch()
+  const meeting = getMeetingById(parseInt(id, 10));
   
-  if (!res.ok) {
+  if (!meeting) {
     notFound();
   }
-
-  const meeting: SacramentMeeting = await res.json();
 
   return (
     <div>

@@ -6,17 +6,17 @@ import { notFound } from 'next/navigation';
 export default async function MeetingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   // Await params for Next.js 16 compatibility
   const { id } = await params;
-  
-  // Call the mock database directly instead of using fetch()
-  const meeting = getMeetingById(parseInt(id, 10));
-  
+
+  // Add the "await" keyword here since getMeetingById now queries the live database
+  const meeting = await getMeetingById(parseInt(id, 10));
+
   if (!meeting) {
     notFound();
   }
 
   return (
     <div>
-      <Link href="/meetings" className="text-blue-600 hover:underline mb-6 inline-block print:hidden">
+      <Link href="/meetings" className="text-blue-600 hover:underline mb-6 inline-block">
         &larr; Back to Meetings
       </Link>
       <MeetingDetail meeting={meeting} />

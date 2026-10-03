@@ -2,12 +2,32 @@ import MeetingDetail from '@/components/MeetingDetail';
 import { getMeetingById } from '@/lib/meetings-db';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 
-export default async function MeetingDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  // Await params for Next.js 16 compatibility
+type Props = { params: Promise<{ id: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
+  const meeting = await getMeetingById(parseInt(id, 10));
 
-  // Add the "await" keyword here since getMeetingById now queries the live database
+  if (!meeting) {
+    return {
+      title: 'Meeting Not Found',
+    };
+  }
+
+  return {
+    title: `Meeting: ${meeting.date}`,
+    description: `Sacrament meeting on ${meeting.date}. Presiding: ${meeting.presiding}.`,
+    openGraph: {
+      title: `Meeting: ${meeting.date}`,
+      description: `Sacrament meeting on ${meeting.date}. Presiding: ${meeting.presiding}.`,
+    },
+  };
+}
+
+export default async function MeetingDetailPage({ params }: Props) {
+  const { id } = await params;
   const meeting = await getMeetingById(parseInt(id, 10));
 
   if (!meeting) {

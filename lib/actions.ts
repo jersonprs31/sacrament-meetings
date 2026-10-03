@@ -5,6 +5,9 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { addMeeting, updateMeeting, deleteMeeting } from './meetings-db';
 import type { SacramentMeeting } from './types';
+import { signIn } from '@/auth';
+import { AuthError } from 'next-auth';
+import { auth } from '@/auth';
 
 const HymnSchema = z.object({
   number: z.number(),
@@ -87,40 +90,54 @@ export type State = {
   message?: string | null;
 };
 
+export async function authenticate(
+  prevState: string | undefined,
+  formData: FormData,
+) {
+  try {
+    await signIn('credentials', formData);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case 'CredentialsSignin':
+          return 'Correo o contraseña incorrectos.';
+        default:
+          return 'Algo salió mal.';
+      }
+    }
+    throw error;
+  }
+}
+
+export async function requireOwnerSession() {
+  const session = await auth();
+  if (!session?.user) throw new Error('No autenticado');
+  return session;
+}
+
 function getMeetingFormData(formData: FormData) {
   return {
     date: String(formData.get('date') ?? ''),
     meetingType: String(formData.get('meetingType') ?? ''),
     presiding: String(formData.get('presiding') ?? ''),
     conducting: String(formData.get('conducting') ?? ''),
-
-    // Fields not currently present in the form
-    // receive values matching the TypeScript/database structure.
     announcements: [],
-
     openingHymn: {
       number: 0,
       title: '',
     },
-
     openingPrayer: '',
-
     wardBusiness: [],
-
     stakeBusiness: false,
-
     sacramentHymn: {
       number: 0,
       title: '',
     },
-
     speakers: [],
-
     closingHymn: {
       number: 0,
       title: '',
     },
-
     closingPrayer: '',
   };
 }
@@ -129,13 +146,13 @@ export async function createMeeting(
   prevState: State,
   formData: FormData
 ): Promise<State> {
+  await requireOwnerSession();
+
   const validatedFields = MeetingFormSchema.safeParse(
     getMeetingFormData(formData)
   );
 
   if (!validatedFields.success) {
-    console.error('Create meeting validation error:', validatedFields.error);
-
     return {
       errors: validatedFields.error.flatten().fieldErrors,
       message: 'Missing Fields. Failed to Create Meeting.',
@@ -147,8 +164,6 @@ export async function createMeeting(
       validatedFields.data as Omit<SacramentMeeting, 'id'>
     );
   } catch (error) {
-    console.error('Create meeting error:', error);
-
     return {
       message: `Database Error: ${
         error instanceof Error ? error.message : String(error)
@@ -165,13 +180,13 @@ export async function editMeeting(
   prevState: State,
   formData: FormData
 ): Promise<State> {
+  await requireOwnerSession();
+
   const validatedFields = MeetingFormSchema.safeParse(
     getMeetingFormData(formData)
   );
 
   if (!validatedFields.success) {
-    console.error('Update meeting validation error:', validatedFields.error);
-
     return {
       errors: validatedFields.error.flatten().fieldErrors,
       message: 'Missing Fields. Failed to Update Meeting.',
@@ -184,8 +199,6 @@ export async function editMeeting(
       validatedFields.data as Partial<SacramentMeeting>
     );
   } catch (error) {
-    console.error('Update meeting error:', error);
-
     return {
       message: `Database Error: ${
         error instanceof Error ? error.message : String(error)
@@ -198,12 +211,12 @@ export async function editMeeting(
 }
 
 export async function deleteMeetingAction(id: number) {
+  await requireOwnerSession();
+
   try {
     await deleteMeeting(id);
     revalidatePath('/meetings');
   } catch (error) {
-    console.error('Delete meeting error:', error);
-
     throw new Error('Database Error: Failed to Delete Meeting.');
   }
 }
